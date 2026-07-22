@@ -1,0 +1,49 @@
+name: cloud_api_cc
+description: "Cloud API CC — Panel de atención WhatsApp"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.11.4
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # UI
+  cupertino_icons: ^1.0.8
+  google_fonts: ^6.2.1
+
+  # Navegación
+  go_router: ^14.8.1
+
+  # Estado
+  flutter_bloc: ^9.1.0
+  equatable: ^2.0.7
+
+  # HTTP / API
+  dio: ^5.8.0+1
+
+  # Almacenamiento seguro (tokens)
+  flutter_secure_storage: ^9.2.4
+
+  # Imágenes
+  cached_network_image: ^3.4.1
+  image_picker: ^1.1.2
+
+  # Notificaciones nativas (Android). Solo se usan para PEDIRLE el token al
+  # sistema y recibir los avisos: el envío lo hace el backend con código propio
+  # (app/Services/Push), sin SDK de Firebase de por medio.
+  firebase_core: ^4.12.1
+  firebase_messaging: ^16.4.3
+
+  # Utilidades
+  intl: ^0.20.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
