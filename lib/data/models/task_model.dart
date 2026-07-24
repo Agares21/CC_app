@@ -38,6 +38,28 @@ class TaskAssignment extends Equatable {
     );
   }
 
+  TaskAssignment copyWith({TaskStatus? status, String? completedAt}) {
+    return TaskAssignment(
+      userId: userId,
+      name: name,
+      lastName: lastName,
+      email: email,
+      status: status ?? this.status,
+      assignedAt: assignedAt,
+      completedAt: completedAt ?? this.completedAt,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'id': userId,
+    'name': name,
+    'last_name': lastName,
+    'email': email,
+    'status': status == TaskStatus.completed ? 'completed' : 'pending',
+    'assigned_at': assignedAt,
+    'completed_at': completedAt,
+  };
+
   @override
   List<Object?> get props => [userId, status, assignedAt, completedAt];
 }
@@ -78,6 +100,24 @@ class TaskModel extends Equatable {
     }
     return null;
   }
+
+  TaskModel copyWith({List<TaskAssignment>? assignments}) {
+    return TaskModel(
+      id: id,
+      title: title,
+      description: description,
+      createdAt: createdAt,
+      assignments: assignments ?? this.assignments,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'titulo': title,
+    'descripcion': description,
+    'created_at': createdAt,
+    'usuarios': assignments.map((assignment) => assignment.toJson()).toList(),
+  };
 
   @override
   List<Object?> get props => [id, title, description, assignments];

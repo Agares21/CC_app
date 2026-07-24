@@ -44,6 +44,8 @@ class ConversationSummary extends Equatable {
     int? unreadCount,
     String? preview,
     String? lastMessageAt,
+    AssigneeModel? assignee,
+    bool? canSend,
   }) {
     return ConversationSummary(
       id: id,
@@ -52,11 +54,23 @@ class ConversationSummary extends Equatable {
       lastMessageAt: lastMessageAt ?? this.lastMessageAt,
       unreadCount: unreadCount ?? this.unreadCount,
       contact: contact,
-      assignee: assignee,
+      assignee: assignee ?? this.assignee,
       preview: preview ?? this.preview,
-      canSend: canSend,
+      canSend: canSend ?? this.canSend,
     );
   }
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'status': status,
+    'created_at': createdAt,
+    'last_message_at': lastMessageAt,
+    'unread_count': unreadCount,
+    'contact': contact.toJson(),
+    'assignee': assignee?.toJson(),
+    'preview': preview,
+    'can_send': canSend,
+  };
 
   @override
   List<Object?> get props => [
@@ -107,6 +121,36 @@ class ConversationDetail extends ConversationSummary {
       preview: json['preview'] as String?,
       canSend: json['can_send'] as bool? ?? true,
       messages: msgs,
+    );
+  }
+
+  // Sin esto, dos detalles con el mismo resumen pero distintos mensajes serían
+  // "iguales" para Equatable (los mensajes no están en los props del resumen),
+  // y el bloc no re-emitiría cuando cambia el estado de un mensaje o llega uno
+  // nuevo: la burbuja no se actualizaría.
+  @override
+  List<Object?> get props => [...super.props, messages];
+
+  @override
+  ConversationDetail copyWith({
+    List<ChatMessage>? messages,
+    String? lastMessageAt,
+    String? preview,
+    int? unreadCount,
+    AssigneeModel? assignee,
+    bool? canSend,
+  }) {
+    return ConversationDetail(
+      id: id,
+      status: status,
+      createdAt: createdAt,
+      lastMessageAt: lastMessageAt ?? this.lastMessageAt,
+      unreadCount: unreadCount ?? this.unreadCount,
+      contact: contact,
+      assignee: assignee ?? this.assignee,
+      preview: preview ?? this.preview,
+      canSend: canSend ?? this.canSend,
+      messages: messages ?? this.messages,
     );
   }
 }
@@ -177,6 +221,41 @@ class MediaAttachment {
 
   bool get isImage => mimeType?.startsWith('image/') ?? false;
   bool get isVideo => mimeType?.startsWith('video/') ?? false;
+  bool get isAudio => mimeType?.startsWith('audio/') ?? false;
+
+  /// Todo lo que no es imagen, video ni audio se trata como documento: es el
+  /// mismo criterio que usa el backend para hablarle a la Cloud API.
+  bool get isDocument => !isImage && !isVideo && !isAudio;
+
+  /// Nombre a mostrar cuando el adjunto no trae uno propio.
+  String get displayName => originalFilename?.trim().isNotEmpty == true
+      ? originalFilename!
+      : 'Archivo adjunto';
+
+  /// Peso legible ("340 KB", "1.2 MB"). Vacío si el backend no lo informó.
+  String get readableSize {
+    final bytes = size;
+    if (bytes == null || bytes <= 0) return '';
+    if (bytes < 1024) return '$bytes B';
+    if (bytes < 1024 * 1024) return '${(bytes / 1024).round()} KB';
+
+    return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
+  }
+
+  /// Etiqueta corta del tipo, para la tarjeta de documento.
+  String get kindLabel {
+    final mime = mimeType ?? '';
+    if (mime == 'application/pdf') return 'PDF';
+    if (mime.contains('word')) return 'Word';
+    if (mime.contains('sheet') || mime.contains('excel')) return 'Excel';
+    if (mime.contains('presentation') || mime.contains('powerpoint')) {
+      return 'PowerPoint';
+    }
+    if (mime.contains('zip') || mime.contains('compressed')) return 'ZIP';
+    if (mime.startsWith('text/')) return 'Texto';
+
+    return 'Archivo';
+  }
 
   factory MediaAttachment.fromJson(Map<String, dynamic> json) =>
       MediaAttachment(
@@ -207,6 +286,13 @@ class ContactModel {
     name: json['name'] as String? ?? 'Sin nombre',
     phone: json['phone'] as String?,
   );
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'wa_id': waId,
+    'name': name,
+    'phone': phone,
+  };
 }
 
 class AssigneeModel {
@@ -217,6 +303,8 @@ class AssigneeModel {
 
   factory AssigneeModel.fromJson(Map<String, dynamic> json) =>
       AssigneeModel(id: json['id'] as int, name: json['name'] as String? ?? '');
+
+  Map<String, dynamic> toJson() => {'id': id, 'name': name};
 }
 
 class MessageSender {

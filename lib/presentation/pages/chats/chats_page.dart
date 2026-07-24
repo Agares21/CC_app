@@ -78,10 +78,19 @@ class _ChatsPageState extends State<ChatsPage> with WidgetsBindingObserver {
               detail: state.detail,
               loading: state.loadingDetail,
               sending: state.sending,
+              sendNotice: state.sendNotice,
+              sendRevision: state.sendRevision,
+              restoreLastMessage: state.restoreLastMessage,
               onBack: () => context.read<ChatsBloc>().add(ChatsBackToList()),
               onShowProfile: () => setState(() => _showProfile = true),
-              onSendMessage: (body) {
-                context.read<ChatsBloc>().add(ChatsSendMessage(body: body));
+              onSendMessage: (body, {mediaPath, mediaName}) {
+                context.read<ChatsBloc>().add(
+                  ChatsSendMessage(
+                    body: body,
+                    mediaPath: mediaPath,
+                    mediaName: mediaName,
+                  ),
+                );
               },
             ),
           );

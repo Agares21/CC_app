@@ -1,7 +1,7 @@
 name: cloud_api_cc
 description: "Cloud API CC — Panel de atención WhatsApp"
 publish_to: 'none'
-version: 1.0.0+1
+version: 1.0.1+2
 
 environment:
   sdk: ^3.11.4
@@ -27,9 +27,21 @@ dependencies:
   # Almacenamiento seguro (tokens)
   flutter_secure_storage: ^9.2.4
 
-  # Imágenes
+  # Adjuntos de los chats: elegir (galería, cámara, documentos) y reproducir.
+  # Las URLs de media van autenticadas con Bearer, así que todo lo que las
+  # consume tiene que aceptar cabeceras propias.
   cached_network_image: ^3.4.1
   image_picker: ^1.1.2
+  file_picker: ^11.0.2
+  video_player: ^2.11.1
+  just_audio: ^0.10.6
+  # Notas de voz: graba en AAC/.m4a (audio/mp4), que es de los formatos que
+  # acepta la Cloud API de WhatsApp.
+  record: ^6.2.1
+  # Los documentos se bajan con Dio (que sí manda el Bearer) y se abren con el
+  # visor del sistema: la URL protegida no se puede pasar al navegador externo.
+  path_provider: ^2.1.6
+  open_filex: ^4.7.0
 
   # Notificaciones nativas (Android). Solo se usan para PEDIRLE el token al
   # sistema y recibir los avisos: el envío lo hace el backend con código propio
@@ -37,6 +49,10 @@ dependencies:
   firebase_core: ^4.12.1
   firebase_messaging: ^16.4.3
   flutter_local_notifications: ^22.1.0
+
+  # Tiempo real: escucha los mensajes que el backend transmite por Pusher, para
+  # que aparezcan al instante sin esperar al polleo (que queda de respaldo).
+  pusher_channels_flutter: ^2.4.0
 
   # Utilidades
   intl: ^0.20.2

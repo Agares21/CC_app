@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io' show Platform;
 
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 /// Cliente HTTP principal de la app.
@@ -11,10 +12,19 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 /// usa v1 para que un futuro v2 pueda cambiar el contrato sin dejar tirados a
 /// los teléfonos con una versión vieja instalada.
 class ApiClient {
-  static const String _defaultBaseUrl = 'https://cc.edgarcallisaya.com/api/v1';
+  /// Servidor por defecto. Se puede apuntar a otro (local o staging) sin tocar
+  /// el código:
+  ///   flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8000/api/v1
+  /// (10.0.2.2 es el host de la máquina visto desde el emulador de Android).
+  static const String _defaultBaseUrl = String.fromEnvironment(
+    'API_BASE_URL',
+    defaultValue: 'https://cc.edgarcallisaya.com/api/v1',
+  );
 
   static const String _tokenKey = 'auth_token';
   static const String _userKey = 'auth_user';
+  static const String _conversationsCacheKey = 'cache_conversations';
+  static const String _tasksCacheKey = 'cache_tasks';
 
   late final Dio dio;
   final FlutterSecureStorage _storage;
@@ -60,7 +70,38 @@ class ApiClient {
     await Future.wait([
       _storage.delete(key: _tokenKey),
       _storage.delete(key: _userKey),
+      _storage.delete(key: _conversationsCacheKey),
+      _storage.delete(key: _tasksCacheKey),
     ]);
+  }
+
+  Future<void> saveConversationsCache(Map<String, dynamic> data) {
+    return _storage.write(key: _conversationsCacheKey, value: jsonEncode(data));
+  }
+
+  Future<Map<String, dynamic>?> getConversationsCache() {
+    return _readJsonMap(_conversationsCacheKey);
+  }
+
+  Future<void> saveTasksCache(Map<String, dynamic> data) {
+    return _storage.write(key: _tasksCacheKey, value: jsonEncode(data));
+  }
+
+  Future<Map<String, dynamic>?> getTasksCache() {
+    return _readJsonMap(_tasksCacheKey);
+  }
+
+  Future<Map<String, dynamic>?> _readJsonMap(String key) async {
+    final encoded = await _storage.read(key: key);
+    if (encoded == null) return null;
+
+    try {
+      final decoded = jsonDecode(encoded);
+      return decoded is Map<String, dynamic> ? decoded : null;
+    } catch (_) {
+      await _storage.delete(key: key);
+      return null;
+    }
   }
 
   /// Convierte las rutas relativas que devuelve Laravel (por ejemplo, el
@@ -103,8 +144,20 @@ class _AuthInterceptor extends Interceptor {
     RequestOptions options,
     RequestInterceptorHandler handler,
   ) async {
-    final token = await _storage.read(key: ApiClient._tokenKey);
-    if (token != null) options.headers['Authorization'] = 'Bearer $token';
+    // La lectura del llavero puede fallar (el keystore de Android tira
+    // PlatformException si la clave quedó inservible, por ejemplo tras una
+    // restauración de copia de seguridad). Si dejáramos propagar la excepción,
+    // handler.next() no se llamaría nunca: los timeouts de Dio corren recién
+    // desde que la petición sale, así que el Future no se completaría jamás y
+    // la pantalla quedaría cargando para siempre. Mejor seguir sin Bearer y
+    // que el backend conteste 401, que sí sabemos manejar.
+    try {
+      final token = await _storage.read(key: ApiClient._tokenKey);
+      if (token != null) options.headers['Authorization'] = 'Bearer $token';
+    } catch (e) {
+      debugPrint('ApiClient: no se pudo leer el token guardado. $e');
+    }
+
     handler.next(options);
   }
 }

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:cloud_api_cc/core/notifications/push_service.dart';
+import 'package:cloud_api_cc/core/realtime/realtime_service.dart';
 import 'package:cloud_api_cc/core/theme/app_theme.dart';
 import 'package:cloud_api_cc/core/router/app_router.dart';
 import 'package:cloud_api_cc/data/api/api_client.dart';
@@ -20,6 +21,7 @@ Future<void> main() async {
   final authApi = AuthApi(apiClient);
   final conversationsApi = ConversationsApi(apiClient);
   final pushService = PushService(devicesApi: DevicesApi(apiClient));
+  final realtimeService = RealtimeService(client: apiClient);
 
   // Antes de runApp para no perder el mensaje que abrió la app: si la
   // notificación se tocó con la app cerrada, getInitialMessage() solo lo
@@ -32,6 +34,7 @@ Future<void> main() async {
       authApi: authApi,
       conversationsApi: conversationsApi,
       pushService: pushService,
+      realtimeService: realtimeService,
     ),
   );
 }
@@ -42,6 +45,7 @@ class CloudApiCCApp extends StatefulWidget {
   final AuthApi authApi;
   final ConversationsApi conversationsApi;
   final PushService pushService;
+  final RealtimeService realtimeService;
 
   const CloudApiCCApp({
     super.key,
@@ -49,6 +53,7 @@ class CloudApiCCApp extends StatefulWidget {
     required this.authApi,
     required this.conversationsApi,
     required this.pushService,
+    required this.realtimeService,
   });
 
   @override
@@ -73,9 +78,13 @@ class _CloudApiCCAppState extends State<CloudApiCCApp> {
       authApi: widget.authApi,
       apiClient: widget.apiClient,
       push: widget.pushService,
+      realtime: widget.realtimeService,
     )..add(AuthCheckSession());
 
-    _chatsBloc = ChatsBloc(api: widget.conversationsApi);
+    _chatsBloc = ChatsBloc(
+      api: widget.conversationsApi,
+      realtime: widget.realtimeService,
+    );
 
     _suscripciones.addAll([
       widget.pushService.onConversationTapped.listen(_abrirConversacion),

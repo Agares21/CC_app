@@ -8,6 +8,10 @@
          notificaciones. En versiones anteriores se concede solo. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
 
+    <!-- Grabar notas de voz desde el chat. Se pide en runtime al tocar el
+         micrófono; sin este permiso el agente solo puede adjuntar archivos. -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
+
     <application
         android:label="cloud_api_cc"
         android:name="${applicationName}"

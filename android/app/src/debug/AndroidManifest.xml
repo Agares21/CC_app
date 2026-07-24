@@ -4,4 +4,9 @@
          to allow setting breakpoints, to provide hot reload, etc.
     -->
     <uses-permission android:name="android.permission.INTERNET"/>
+
+    <!-- Solo en debug: Android bloquea http:// desde API 28. Esto permite
+         apuntar la app a un backend local (http://10.0.2.2:8000) al desarrollar.
+         La build de release no lo incluye, así que sigue exigiendo HTTPS. -->
+    <application android:usesCleartextTraffic="true" />
 </manifest>

@@ -37,7 +37,16 @@ class _TasksPageState extends State<TasksPage> {
   }
 
   Future<void> _load() async {
-    if (mounted) {
+    final cached = await _api.getCachedTasks();
+    final cachedTasks = _parseTasks(cached);
+
+    if (mounted && cachedTasks.isNotEmpty) {
+      setState(() {
+        _tasks = cachedTasks;
+        _loading = false;
+        _error = null;
+      });
+    } else if (mounted) {
       setState(() {
         _loading = true;
         _error = null;
@@ -46,9 +55,8 @@ class _TasksPageState extends State<TasksPage> {
 
     try {
       final response = await _api.getTasks();
-      final tasks = (response['data'] as List<dynamic>? ?? const [])
-          .map((task) => TaskModel.fromJson(task as Map<String, dynamic>))
-          .toList();
+      final tasks = _parseTasks(response);
+      await _api.cacheTasks(tasks);
       if (!mounted) return;
       setState(() {
         _tasks = tasks;
@@ -58,7 +66,9 @@ class _TasksPageState extends State<TasksPage> {
       if (!mounted) return;
       setState(() {
         _loading = false;
-        _error = 'No se pudieron cargar las tareas.';
+        if (_tasks.isEmpty) {
+          _error = 'No se pudieron cargar las tareas.';
+        }
       });
     }
   }
@@ -67,8 +77,23 @@ class _TasksPageState extends State<TasksPage> {
     setState(() => _completingId = task.id);
     try {
       await _api.completeTask(task.id);
-      await _load();
+      final userId = _user?.id;
+      final completedAt = DateTime.now().toUtc().toIso8601String();
+      final tasks = _tasks.map((item) {
+        if (item.id != task.id || userId == null) return item;
+        return item.copyWith(
+          assignments: item.assignments.map((assignment) {
+            if (assignment.userId != userId) return assignment;
+            return assignment.copyWith(
+              status: TaskStatus.completed,
+              completedAt: completedAt,
+            );
+          }).toList(),
+        );
+      }).toList();
+      await _api.cacheTasks(tasks);
       if (!mounted) return;
+      setState(() => _tasks = tasks);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Tarea marcada como realizada.')),
       );
@@ -80,6 +105,12 @@ class _TasksPageState extends State<TasksPage> {
     } finally {
       if (mounted) setState(() => _completingId = null);
     }
+  }
+
+  List<TaskModel> _parseTasks(Map<String, dynamic>? response) {
+    return (response?['data'] as List<dynamic>? ?? const [])
+        .map((task) => TaskModel.fromJson(task as Map<String, dynamic>))
+        .toList();
   }
 
   @override
