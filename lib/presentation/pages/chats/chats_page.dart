@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:cloud_api_cc/presentation/bloc/chats/chats_bloc.dart';
 import 'package:cloud_api_cc/presentation/pages/chats/widgets/chat_list.dart';
+import 'package:cloud_api_cc/presentation/pages/chats/widgets/chat_taken_view.dart';
 import 'package:cloud_api_cc/presentation/pages/chats/widgets/conversation_view.dart';
 import 'package:cloud_api_cc/presentation/pages/chats/widgets/profile_panel.dart';
 
@@ -16,12 +17,13 @@ class ChatsPage extends StatefulWidget {
   State<ChatsPage> createState() => _ChatsPageState();
 }
 
-class _ChatsPageState extends State<ChatsPage> {
+class _ChatsPageState extends State<ChatsPage> with WidgetsBindingObserver {
   bool _showProfile = false;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     final bloc = context.read<ChatsBloc>();
     bloc.add(ChatsLoadRequested());
     bloc.startPolling();
@@ -29,14 +31,28 @@ class _ChatsPageState extends State<ChatsPage> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     context.read<ChatsBloc>().stopPolling();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      context.read<ChatsBloc>().add(ChatsRefreshSilent());
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<ChatsBloc, ChatsState>(
       builder: (context, state) {
+        if (state.chatTaken) {
+          return ChatTakenView(
+            onBack: () => context.read<ChatsBloc>().add(ChatsDismissTaken()),
+          );
+        }
+
         // Si hay un hilo seleccionado y se pide el perfil
         if (_showProfile && state.detail != null) {
           return PopScope(

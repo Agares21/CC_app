@@ -17,6 +17,17 @@ plugins {
 if (file("google-services.json").exists()) {
     apply(plugin = "com.google.gms.google-services")
 } else {
+    val isReleaseBuild = gradle.startParameter.taskNames.any {
+        it.lowercase().contains("release")
+    }
+
+    if (isReleaseBuild) {
+        throw GradleException(
+            "Falta android/app/google-services.json. " +
+                "No se puede publicar una app de soporte sin notificaciones push.",
+        )
+    }
+
     logger.warn(
         "AVISO: falta android/app/google-services.json. " +
             "La app se compila SIN notificaciones push.",
@@ -29,6 +40,7 @@ android {
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
+        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
@@ -46,6 +58,7 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        multiDexEnabled = true
     }
 
     buildTypes {
@@ -55,6 +68,10 @@ android {
             signingConfig = signingConfigs.getByName("debug")
         }
     }
+}
+
+dependencies {
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
 }
 
 flutter {

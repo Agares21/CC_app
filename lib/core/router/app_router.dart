@@ -10,17 +10,20 @@ import 'package:cloud_api_cc/presentation/pages/chats/chats_page.dart';
 import 'package:cloud_api_cc/presentation/pages/usuarios/usuarios_page.dart';
 import 'package:cloud_api_cc/presentation/pages/horarios/horarios_page.dart';
 import 'package:cloud_api_cc/presentation/pages/auditoria/auditoria_page.dart';
+import 'package:cloud_api_cc/presentation/pages/tasks/tasks_page.dart';
+import 'package:cloud_api_cc/presentation/pages/profile/profile_page.dart';
 
 /// Configuración de rutas de la aplicación.
 ///
 /// Usa [GoRouter] con un shell autenticado que muestra el [AppShell]
-/// (AppBar + BottomNavigationBar) en las rutas protegidas.
+/// (AppBar + navegación superior) en las rutas protegidas.
 final routerProvider = GoRouter(
   initialLocation: '/chats',
   redirect: (context, state) {
     final authState = context.read<AuthBloc>().state;
     final isAuth = authState is AuthAuthenticated;
-    final isAuthRoute = state.matchedLocation == '/login' ||
+    final isAuthRoute =
+        state.matchedLocation == '/login' ||
         state.matchedLocation == '/forgot-password' ||
         state.matchedLocation == '/reset-password' ||
         state.matchedLocation == '/accept-invitation';
@@ -33,10 +36,7 @@ final routerProvider = GoRouter(
   },
   routes: [
     // — Rutas públicas (sin shell) —
-    GoRoute(
-      path: '/login',
-      builder: (context, state) => const LoginPage(),
-    ),
+    GoRoute(path: '/login', builder: (context, state) => const LoginPage()),
     GoRoute(
       path: '/forgot-password',
       builder: (context, state) => const ForgotPasswordPage(),
@@ -62,27 +62,33 @@ final routerProvider = GoRouter(
       routes: [
         GoRoute(
           path: '/chats',
-          pageBuilder: (context, state) => const NoTransitionPage(
-            child: ChatsPage(),
-          ),
+          pageBuilder: (context, state) =>
+              const NoTransitionPage(child: ChatsPage()),
+        ),
+        GoRoute(
+          path: '/tareas',
+          pageBuilder: (context, state) =>
+              const NoTransitionPage(child: TasksPage()),
+        ),
+        GoRoute(
+          path: '/perfil',
+          pageBuilder: (context, state) =>
+              const NoTransitionPage(child: ProfilePage()),
         ),
         GoRoute(
           path: '/usuarios',
-          pageBuilder: (context, state) => const NoTransitionPage(
-            child: UsuariosPage(),
-          ),
+          pageBuilder: (context, state) =>
+              const NoTransitionPage(child: UsuariosPage()),
         ),
         GoRoute(
           path: '/horarios',
-          pageBuilder: (context, state) => const NoTransitionPage(
-            child: HorariosPage(),
-          ),
+          pageBuilder: (context, state) =>
+              const NoTransitionPage(child: HorariosPage()),
         ),
         GoRoute(
           path: '/auditoria',
-          pageBuilder: (context, state) => const NoTransitionPage(
-            child: AuditoriaPage(),
-          ),
+          pageBuilder: (context, state) =>
+              const NoTransitionPage(child: AuditoriaPage()),
         ),
       ],
     ),

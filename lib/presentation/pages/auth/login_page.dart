@@ -19,7 +19,6 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  bool _remember = true;
   bool _obscurePassword = true;
   String? _error;
 
@@ -37,11 +36,9 @@ class _LoginPageState extends State<LoginPage> {
       setState(() => _error = 'Por favor completa todos los campos.');
       return;
     }
-    context.read<AuthBloc>().add(AuthLoginRequested(
-      email: email,
-      password: password,
-      remember: _remember,
-    ));
+    context.read<AuthBloc>().add(
+      AuthLoginRequested(email: email, password: password),
+    );
   }
 
   @override
@@ -89,7 +86,9 @@ class _LoginPageState extends State<LoginPage> {
                         padding: const EdgeInsets.symmetric(vertical: 32),
                         decoration: const BoxDecoration(
                           color: AppColors.brand,
-                          borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+                          borderRadius: BorderRadius.vertical(
+                            top: Radius.circular(16),
+                          ),
                         ),
                         child: Column(
                           children: [
@@ -114,12 +113,16 @@ class _LoginPageState extends State<LoginPage> {
                             const SizedBox(height: 12),
                             Text(
                               'Cloud API CC',
-                              style: AppTextStyles.headingLg.copyWith(color: Colors.white),
+                              style: AppTextStyles.headingLg.copyWith(
+                                color: Colors.white,
+                              ),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               'Panel de atención por WhatsApp',
-                              style: AppTextStyles.caption.copyWith(color: Colors.white70),
+                              style: AppTextStyles.caption.copyWith(
+                                color: Colors.white70,
+                              ),
                             ),
                           ],
                         ),
@@ -132,14 +135,21 @@ class _LoginPageState extends State<LoginPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             // Email
-                            Text('Correo electrónico', style: AppTextStyles.label),
+                            Text(
+                              'Correo electrónico',
+                              style: AppTextStyles.label,
+                            ),
                             const SizedBox(height: 6),
                             TextField(
                               controller: _emailController,
                               keyboardType: TextInputType.emailAddress,
                               textInputAction: TextInputAction.next,
                               decoration: InputDecoration(
-                                prefixIcon: const Icon(Icons.mail_outline, size: 18, color: AppColors.mutedForeground),
+                                prefixIcon: const Icon(
+                                  Icons.mail_outline,
+                                  size: 18,
+                                  color: AppColors.mutedForeground,
+                                ),
                                 hintText: 'tucorreo@empresa.com',
                               ),
                             ),
@@ -175,15 +185,23 @@ class _LoginPageState extends State<LoginPage> {
                               textInputAction: TextInputAction.done,
                               onSubmitted: (_) => _submit(),
                               decoration: InputDecoration(
-                                prefixIcon: const Icon(Icons.lock_outline, size: 18, color: AppColors.mutedForeground),
+                                prefixIcon: const Icon(
+                                  Icons.lock_outline,
+                                  size: 18,
+                                  color: AppColors.mutedForeground,
+                                ),
                                 hintText: '••••••••',
                                 suffixIcon: IconButton(
                                   icon: Icon(
-                                    _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                                    _obscurePassword
+                                        ? Icons.visibility_off_outlined
+                                        : Icons.visibility_outlined,
                                     size: 18,
                                     color: AppColors.mutedForeground,
                                   ),
-                                  onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                                  onPressed: () => setState(
+                                    () => _obscurePassword = !_obscurePassword,
+                                  ),
                                 ),
                               ),
                             ),
@@ -196,32 +214,20 @@ class _LoginPageState extends State<LoginPage> {
                                 padding: const EdgeInsets.all(12),
                                 margin: const EdgeInsets.only(bottom: 12),
                                 decoration: BoxDecoration(
-                                  color: AppColors.destructive.withValues(alpha: 0.1),
+                                  color: AppColors.destructive.withValues(
+                                    alpha: 0.1,
+                                  ),
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: Text(
                                   _error!,
-                                  style: AppTextStyles.bodySm.copyWith(color: AppColors.destructive),
+                                  style: AppTextStyles.bodySm.copyWith(
+                                    color: AppColors.destructive,
+                                  ),
                                 ),
                               ),
 
-                            // Remember
-                            Row(
-                              children: [
-                                SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: Checkbox(
-                                    value: _remember,
-                                    onChanged: (v) => setState(() => _remember = v ?? true),
-                                    activeColor: AppColors.brand,
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Text('Mantener sesión iniciada', style: AppTextStyles.bodySm.copyWith(color: AppColors.brand)),
-                              ],
-                            ),
-                            const SizedBox(height: 20),
+                            const SizedBox(height: 8),
 
                             // Submit
                             BlocBuilder<AuthBloc, AuthState>(

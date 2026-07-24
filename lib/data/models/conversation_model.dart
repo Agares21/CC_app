@@ -59,7 +59,18 @@ class ConversationSummary extends Equatable {
   }
 
   @override
-  List<Object?> get props => [id, status, unreadCount, lastMessageAt];
+  List<Object?> get props => [
+    id,
+    status,
+    createdAt,
+    lastMessageAt,
+    unreadCount,
+    contact.id,
+    contact.name,
+    assignee?.id,
+    preview,
+    canSend,
+  ];
 }
 
 /// Detalle completo de una conversación.
@@ -167,7 +178,8 @@ class MediaAttachment {
   bool get isImage => mimeType?.startsWith('image/') ?? false;
   bool get isVideo => mimeType?.startsWith('video/') ?? false;
 
-  factory MediaAttachment.fromJson(Map<String, dynamic> json) => MediaAttachment(
+  factory MediaAttachment.fromJson(Map<String, dynamic> json) =>
+      MediaAttachment(
         id: json['id'] as int,
         url: json['url'] as String? ?? '',
         mimeType: json['mime_type'] as String?,
@@ -190,11 +202,11 @@ class ContactModel {
   });
 
   factory ContactModel.fromJson(Map<String, dynamic> json) => ContactModel(
-        id: json['id'] as int,
-        waId: json['wa_id'] as String? ?? '',
-        name: json['name'] as String? ?? 'Sin nombre',
-        phone: json['phone'] as String?,
-      );
+    id: json['id'] as int,
+    waId: json['wa_id'] as String? ?? '',
+    name: json['name'] as String? ?? 'Sin nombre',
+    phone: json['phone'] as String?,
+  );
 }
 
 class AssigneeModel {
@@ -203,10 +215,8 @@ class AssigneeModel {
 
   const AssigneeModel({required this.id, required this.name});
 
-  factory AssigneeModel.fromJson(Map<String, dynamic> json) => AssigneeModel(
-        id: json['id'] as int,
-        name: json['name'] as String? ?? '',
-      );
+  factory AssigneeModel.fromJson(Map<String, dynamic> json) =>
+      AssigneeModel(id: json['id'] as int, name: json['name'] as String? ?? '');
 }
 
 class MessageSender {
@@ -215,8 +225,6 @@ class MessageSender {
 
   const MessageSender({required this.id, required this.name});
 
-  factory MessageSender.fromJson(Map<String, dynamic> json) => MessageSender(
-        id: json['id'] as int,
-        name: json['name'] as String? ?? '',
-      );
+  factory MessageSender.fromJson(Map<String, dynamic> json) =>
+      MessageSender(id: json['id'] as int, name: json['name'] as String? ?? '');
 }

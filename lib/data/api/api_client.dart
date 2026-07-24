@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io' show Platform;
 
 import 'package:dio/dio.dart';
@@ -10,27 +11,63 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 /// usa v1 para que un futuro v2 pueda cambiar el contrato sin dejar tirados a
 /// los teléfonos con una versión vieja instalada.
 class ApiClient {
-  static const String _defaultBaseUrl = 'https://api.cloudapicc.com/api/v1';
+  static const String _defaultBaseUrl = 'https://cc.edgarcallisaya.com/api/v1';
 
   static const String _tokenKey = 'auth_token';
+  static const String _userKey = 'auth_user';
 
   late final Dio dio;
   final FlutterSecureStorage _storage;
 
   ApiClient({String? baseUrl, FlutterSecureStorage? storage})
-      : _storage = storage ?? const FlutterSecureStorage() {
-    dio = Dio(BaseOptions(
-      baseUrl: baseUrl ?? _defaultBaseUrl,
-      connectTimeout: const Duration(seconds: 15),
-      receiveTimeout: const Duration(seconds: 15),
-      headers: {'Accept': 'application/json', 'Content-Type': 'application/json'},
-    ));
+    : _storage = storage ?? const FlutterSecureStorage() {
+    dio = Dio(
+      BaseOptions(
+        baseUrl: baseUrl ?? _defaultBaseUrl,
+        connectTimeout: const Duration(seconds: 15),
+        receiveTimeout: const Duration(seconds: 15),
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+      ),
+    );
     dio.interceptors.add(_AuthInterceptor(_storage));
   }
 
-  Future<void> saveToken(String token) => _storage.write(key: _tokenKey, value: token);
+  Future<void> saveToken(String token) =>
+      _storage.write(key: _tokenKey, value: token);
   Future<void> clearToken() => _storage.delete(key: _tokenKey);
   Future<String?> getToken() => _storage.read(key: _tokenKey);
+
+  Future<void> saveUser(Map<String, dynamic> user) {
+    return _storage.write(key: _userKey, value: jsonEncode(user));
+  }
+
+  Future<Map<String, dynamic>?> getSavedUser() async {
+    final encoded = await _storage.read(key: _userKey);
+    if (encoded == null) return null;
+
+    try {
+      final decoded = jsonDecode(encoded);
+      return decoded is Map<String, dynamic> ? decoded : null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> clearSession() async {
+    await Future.wait([
+      _storage.delete(key: _tokenKey),
+      _storage.delete(key: _userKey),
+    ]);
+  }
+
+  /// Convierte las rutas relativas que devuelve Laravel (por ejemplo, el
+  /// avatar privado) en una URL del mismo servidor configurado para la app.
+  String absoluteUrl(String path) {
+    return Uri.parse(dio.options.baseUrl).resolve(path).toString();
+  }
 
   /// Cabeceras para bajar adjuntos (imágenes y videos de los chats).
   ///
@@ -62,7 +99,10 @@ class _AuthInterceptor extends Interceptor {
   _AuthInterceptor(this._storage);
 
   @override
-  void onRequest(RequestOptions options, RequestInterceptorHandler handler) async {
+  void onRequest(
+    RequestOptions options,
+    RequestInterceptorHandler handler,
+  ) async {
     final token = await _storage.read(key: ApiClient._tokenKey);
     if (token != null) options.headers['Authorization'] = 'Bearer $token';
     handler.next(options);
